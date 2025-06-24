@@ -1,18 +1,24 @@
 import streamlit as st
-from parser import extract_wrestlers_from_html
+from scraper import scrape_wrestlers
 
-st.title("TrackWrestling Bracket Parser")
+st.set_page_config(layout="wide")
+st.title("Kansas 6A State Wrestling Bracket Viewer")
 
-uploaded_file = st.file_uploader("Upload a TrackWrestling bracket HTML file")
+if st.button("Scrape Wrestlers"):
+    with st.spinner("Scraping brackets from Trackwrestling..."):
+        df = scrape_wrestlers()
+        st.success("Done!")
+        st.dataframe(df)
 
-if uploaded_file:
-    # Save to temporary file
-    with open("temp.html", "wb") as f:
-        f.write(uploaded_file.read())
-    
-    wrestlers = extract_wrestlers_from_html("temp.html")
-    st.write("### Wrestlers Found:")
-    st.write(wrestlers)
+        grade_filter = st.multiselect("Filter by Grade", options=sorted(df["Grade"].unique()))
+        weight_filter = st.multiselect("Filter by Weight Class", options=sorted(df["Weight Class"].unique()))
 
-    # Optionally allow download
-    st.download_button("Download Wrestlers List", "\n".join(wrestlers), file_name="wrestlers.txt")
+        filtered_df = df[
+            (df["Grade"].isin(grade_filter) if grade_filter else True) &
+            (df["Weight Class"].isin(weight_filter) if weight_filter else True)
+        ]
+
+        st.write("### Filtered Wrestlers")
+        st.dataframe(filtered_df)
+
+        st.download_button("Download CSV", filtered_df.to_csv(index=False), file_name="wrestlers_filtered.csv")
