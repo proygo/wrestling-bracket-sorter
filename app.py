@@ -7,25 +7,26 @@ st.set_page_config(layout="wide")
 st.title("Trackwrestling Bracket Scraper")
 
 st.markdown("""
-Paste the **Trackwrestling bracket viewer URL** below (e.g. Kansas 6A state brackets)  
+Paste the **Trackwrestling bracket viewer URL** below (e.g., Kansas 6A state tournament)  
 and click **Scrape Wrestlers**.  
-The app will scrape all weight classes and show wrestler info.
+The app will automatically scrape all weight classes and display wrestler info.
 """)
 
 tournament_url = st.text_input("Tournament Bracket URL", 
     value="https://www.trackwrestling.com/predefinedtournaments/MainFrame.jsp?newSession=false&TIM=1750793545778&pageName=%2Fpredefinedtournaments%2FBracketViewer.jsp&twSessionId=gpewflalse")
 
 if st.button("Scrape Wrestlers"):
-    if not tournament_url:
+    if not tournament_url.strip():
         st.error("Please enter a valid Trackwrestling bracket URL.")
     else:
-        with st.spinner("Scraping brackets... This can take up to 30 seconds"):
+        with st.spinner("Scraping brackets — this may take 30+ seconds..."):
             try:
                 df = scrape_wrestlers(tournament_url)
                 if df.empty:
-                    st.warning("No wrestlers found. Check the URL or try again later.")
+                    st.warning("No wrestlers found. Please check the URL or try again.")
                 else:
                     st.success(f"Found {len(df)} wrestlers!")
+
                     st.dataframe(df)
 
                     grade_filter = st.multiselect("Filter by Grade", options=sorted(df["Grade"].unique()))
@@ -41,5 +42,6 @@ if st.button("Scrape Wrestlers"):
 
                     csv = filtered_df.to_csv(index=False)
                     st.download_button("Download CSV", csv, file_name="wrestlers.csv")
+
             except Exception as e:
                 st.error(f"Error during scraping: {e}")
